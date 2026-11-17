@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>AstroPipe: как работать</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Макет: одна колонка инструкции, слева — номер шага как на конверте пластинки; окна программ нарисованы как есть */
+:root {
+  --bg: #F3F5F8;
+  --paper: #FFFFFF;
+  --ink: #17202B;
+  --muted: #5A6675;
+  --line: #D9DFE7;
+  --accent: #1E4F91;      /* цианотипия */
+  --accent-soft: #E3ECF8;
+  --ok: #1D7A4A;
+  --ok-soft: #E2F3EA;
+  --warn: #9A5B00;
+  --warn-soft: #FBF0DC;
+  --console-bg: #0E1621;
+  --console-fg: #D6DEE8;
+  --console-dim: #7F8DA0;
+  --console-green: #7FD49B;
+  --console-yellow: #F2CF6B;
+  --font-body: "Golos Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Cascadia Mono", monospace;
+  --step: 2.25rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F151D; --paper: #161F2A; --ink: #E4E9F0; --muted: #9AA7B8; --line: #2A3646;
+    --accent: #8DB4EE; --accent-soft: #1C2B40; --ok: #7FD49B; --ok-soft: #16301F;
+    --warn: #F2C26B; --warn-soft: #33270F; --console-bg: #070B11; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F151D; --paper: #161F2A; --ink: #E4E9F0; --muted: #9AA7B8; --line: #2A3646;
+  --accent: #8DB4EE; --accent-soft: #1C2B40; --ok: #7FD49B; --ok-soft: #16301F;
+  --warn: #F2C26B; --warn-soft: #33270F; --console-bg: #070B11; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 400 1rem/1.6 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 4rem;
+}
+.wrap { max-width: 50rem; margin: 0 auto; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code, kbd, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+code { background: var(--accent-soft); padding: 0.05em 0.35em; border-radius: 4px; }
+kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.35em; background: var(--paper); }
+strong { font-weight: 600; }
+
+/* шапка */
+header.top { padding-block: 3rem 2rem; display: grid; gap: 1rem; }
+.eyebrow { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 700; }
+.lede { font-size: 1.12rem; color: var(--muted); max-width: 40rem; }
+
+/* оглавление-маршрут */
+.route { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0; margin: 0.5rem 0 0; list-style: none; }
+.route a {
+  display: inline-flex; gap: 0.5rem; align-items: center; text-decoration: none; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 0.3rem 0.85rem 0.3rem 0.35rem; font-size: 0.92rem;
+}
+.route a:hover { border-color: var(--accent); }
+.route b { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--accent); color: var(--paper); font-size: 0.8rem; }
+
+/* блоки */
+section { padding-block: 2.25rem; border-top: 1px solid var(--line); display: grid; gap: 1.1rem; }
+.step-head { display: grid; grid-template-columns: var(--step) 1fr; gap: 1rem; align-items: start; }
+.num {
+  width: var(--step); height: var(--step); border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent); color: var(--paper); font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums;
+}
+h2 { font-size: 1.5rem; font-weight: 700; padding-top: 0.2rem; }
+.step-head p { color: var(--muted); margin-top: 0.3rem; }
+.body { display: grid; gap: 1rem; padding-left: calc(var(--step) + 1rem); min-width: 0; }
+@media (max-width: 560px) { .body { padding-left: 0; } }
+h3 { font-size: 1.05rem; font-weight: 600; }
+
+ol.do { margin: 0; padding-left: 1.3rem; display: grid; gap: 0.55rem; }
+ol.do li::marker { color: var(--accent); font-weight: 600; }
+ul.plain { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+
+.note { border-radius: 10px; padding: 0.85rem 1rem; display: grid; gap: 0.3rem; }
+.note.warn { background: var(--warn-soft); }
+.note.warn .tag { color: var(--warn); }
+.note.ok { background: var(--ok-soft); }
+.note.ok .tag { color: var(--ok); }
+.note.info { background: var(--accent-soft); }
+.note.info .tag { color: var(--accent); }
+.tag { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; }
+
+/* «окна» */
+.window { border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--paper); min-width: 0; }
+.window .bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.75rem; font-size: 0.8rem; color: var(--muted); border-bottom: 1px solid var(--line); }
+.window .bar i { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--line); display: inline-block; }
+.window .cap { font-size: 0.85rem; color: var(--muted); padding: 0.55rem 0.9rem; border-top: 1px solid var(--line); }
+.console { background: var(--console-bg); color: var(--console-fg); font: 0.82rem/1.55 var(--font-mono); padding: 0.9rem 1rem; overflow-x: auto; white-space: pre; margin: 0; }
+.console .d { color: var(--console-dim); }
+.console .g { color: var(--console-green); }
+.console .y { color: var(--console-yellow); }
+.console .you { color: #FFFFFF; background: rgba(127, 212, 155, 0.18); border-radius: 3px; padding: 0 0.2em; }
+
+/* окно установщика Python */
+.installer { padding: 1rem 1.1rem; display: grid; gap: 0.75rem; font-size: 0.92rem; }
+.installer .big { font-size: 1.15rem; font-weight: 600; }
+.installer .choice { border: 1px solid var(--line); border-radius: 8px; padding: 0.6rem 0.8rem; }
+.check { display: flex; gap: 0.6rem; align-items: center; }
+.box { width: 1.05rem; height: 1.05rem; border: 2px solid var(--muted); border-radius: 3px; flex: none; display: grid; place-items: center; font-size: 0.75rem; line-height: 1; }
+.check.must { outline: 2px dashed var(--warn); outline-offset: 4px; border-radius: 4px; }
+.check.must .box { border-color: var(--ok); background: var(--ok); color: var(--paper); }
+.pill-note { font-size: 0.78rem; font-weight: 600; color: var(--warn); }
+
+/* таблицы */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; vertical-align: top; padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--bg); }
+td:first-child { font-weight: 600; white-space: nowrap; }
+td .mono { white-space: nowrap; }
+
+/* превью с кружками */
+.legend { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; font-size: 0.92rem; }
+.legend span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.ring { width: 1rem; height: 1rem; border-radius: 50%; border: 2px solid; display: inline-block; }
+.ring.g { border-color: #34C26A; }
+.ring.y { border-color: #E5B700; }
+canvas#sky { width: 100%; height: auto; display: block; background: #05080C; }
+
+/* проблемы */
+details { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+details + details { margin-top: 0.5rem; }
+summary { cursor: pointer; padding: 0.8rem 1rem; font-weight: 600; list-style: none; display: flex; gap: 0.6rem; align-items: baseline; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "+"; color: var(--accent); font-family: var(--font-mono); width: 1rem; flex: none; }
+details[open] summary::before { content: "−"; }
+details .ans { padding: 0 1rem 1rem 2.6rem; display: grid; gap: 0.5rem; color: var(--ink); }
+.say { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
+
+footer { padding-top: 2rem; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--line); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Обсерватория · обработка фотопластинок</div>
+  <h1>Как обработать скан пластинки в AstroPipe</h1>
+  <p class="lede">Программа берёт скан или цифровой снимок неба, находит на нём звёзды, сверяет их со звёздным каталогом и определяет, какой участок неба снят, точные координаты каждой звезды и её звёздную величину. Ниже всё по шагам: установка делается один раз, дальше — только шаг 4.</p>
+  <ul class="route" aria-label="Шаги">
+    <li><a href="#python"><b>1</b>Установить Python</a></li>
+    <li><a href="#unpack"><b>2</b>Распаковать архив</a></li>
+    <li><a href="#install"><b>3</b>Установить программу</a></li>
+    <li><a href="#run"><b>4</b>Обработать скан</a></li>
+    <li><a href="#results"><b>5</b>Посмотреть результат</a></li>
+    <li><a href="#problems"><b>?</b>Если что-то не так</a></li>
+  </ul>
+</header>
+
+<section aria-labelledby="need-h">
+  <h2 id="need-h">Что понадобится</h2>
+  <ul class="plain">
+    <li>Компьютер с <strong>Windows 10 или 11</strong>.</li>
+    <li><strong>Интернет</strong> — при установке и при каждой обработке: программа скачивает звёздный каталог для нужного участка неба.</li>
+    <li>Архив <code>AstroPipe.zip</code>, который вам прислали.</li>
+    <li>Сканы пластинок (лучше TIFF) или снимки в формате FITS. Для каждого желательно знать: <strong>что снято</strong>, <strong>год съёмки</strong>, <strong>фокусное расстояние телескопа</strong> и <strong>с каким разрешением (dpi) сканировали</strong>. Обычно это есть на конверте пластинки или в журнале наблюдений.</li>
+  </ul>
+</section>
+
+<section id="python" aria-labelledby="s1">
+  <div class="step-head">
+    <div class="num">1</div>
+    <div><h2 id="s1">Установить Python</h2><p>Один раз. Python — это среда, в которой работает программа.</p></div>
+  </div>
+  <div class="body">
+    <ol class="do">
+      <li>Откройте сайт <a href="https://www.python.org/downloads/" target="_blank" rel="noopener">python.org/downloads</a> и нажмите большую жёлтую кнопку <strong>Download Python</strong>.</li>
+      <li>Запустите скачанный файл (он будет в папке «Загрузки»).</li>
+      <li><strong>Внизу первого окна поставьте галочку «Add python.exe to PATH».</strong> Это самое важное: без неё программа не найдёт Python.</li>
+      <li>Нажмите <strong>Install Now</strong> и дождитесь надписи <em>Setup was successful</em>. Закройте окно.</li>
+    </ol>
+    <div class="window" role="img" aria-label="Окно установщика Python: внизу отмечена галочка Add python.exe to PATH">
+      <div class="bar"><i></i><i></i><i></i> Python Setup</div>
+      <div class="installer">
+        <div class="big">Install Python</div>
+        <div class="choice"><strong>→ Install Now</strong><br><span class="mono" style="color:var(--muted)">C:\Users\…\AppData\Local\Programs\Python</span></div>
+        <div class="choice">→ Customize installation</div>
+        <div class="check"><span class="box"></span> Use admin privileges when installing py.exe</div>
+        <div class="check must"><span class="box">✓</span> Add python.exe to PATH <span class="pill-note">← поставить!</span></div>
+      </div>
+      <div class="cap">Так выглядит первое окно установщика. Галочка в самом низу по умолчанию снята.</div>
+    </div>
+  </div>
+</section>
+
+<section id="unpack" aria-labelledby="s2">
+  <div class="step-head">
+    <div class="num">2</div>
+    <div><h2 id="s2">Распаковать архив</h2><p>Один раз.</p></div>
+  </div>
+  <div class="body">
+    <ol class="do">
+      <li>Нажмите на <code>AstroPipe.zip</code> <strong>правой кнопкой мыши</strong> → <strong>Извлечь все…</strong></li>
+      <li>Выберите постоянное место, например <code>Документы</code>, и нажмите <strong>Извлечь</strong>. Появится папка <code>AstroPipe</code>.</li>
+    </ol>
+    <div class="note warn">
+      <span class="tag">Частая ошибка</span>
+      <p>Не запускайте файлы, просто открыв архив двойным щелчком: из архива программа работать не будет. Сначала «Извлечь все», потом работать с обычной папкой.</p>
+    </div>
+    <p>Внутри папки вам понадобятся только три файла:</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Файл</th><th>Зачем</th></tr></thead>
+        <tbody>
+          <tr><td>install.bat</td><td>Установка. Запускается один раз.</td></tr>
+          <tr><td>run.bat</td><td>Обработка снимков. Им вы будете пользоваться постоянно.</td></tr>
+          <tr><td>ИНСТРУКЦИЯ.html</td><td>Эта инструкция.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--muted)">Остальные папки и файлы — сама программа, их трогать не нужно.</p>
+  </div>
+</section>
+
+<section id="install" aria-labelledby="s3">
+  <div class="step-head">
+    <div class="num">3</div>
+    <div><h2 id="s3">Установить программу</h2><p>Один раз, занимает 3–10 минут.</p></div>
+  </div>
+  <div class="body">
+    <ol class="do">
+      <li>Откройте папку <code>AstroPipe</code> и дважды щёлкните <code>install.bat</code>.</li>
+      <li>Если Windows покажет синее окно <em>«Система Windows защитила ваш компьютер»</em>, нажмите <strong>Подробнее</strong> → <strong>Выполнить в любом случае</strong>. Это обычное предупреждение для файлов, полученных из интернета.</li>
+      <li>Откроется чёрное окно. Ничего не нажимайте и дождитесь надписи <strong>«Готово»</strong>. Потом нажмите любую клавишу — окно закроется.</li>
+    </ol>
+    <div class="window">
+      <div class="bar"><i></i><i></i><i></i> install.bat</div>
+<pre class="console">=== AstroPipe: установка ===
+Создаю окружение на Python 3.13...
+Ставлю библиотеки, это займёт несколько минут...
+Проверяю, что всё работает...
+<span class="g">..............                                     [100%]
+14 passed in 41.20s</span>
+
+<span class="g">Готово. Перетащите снимок или скан на файл run.bat.</span>
+<span class="d">Press any key to continue . . .</span></pre>
+      <div class="cap">Так выглядит успешная установка. Точки и «14 passed» — это самопроверка программы.</div>
+    </div>
+    <div class="note warn">
+      <span class="tag">Если появилось «Установка не удалась»</span>
+      <p>Выделите мышью весь текст в окне, скопируйте (<kbd>Ctrl</kbd>+<kbd>C</kbd>) и отправьте тому, кто прислал вам программу.</p>
+    </div>
+  </div>
+</section>
+
+<section id="run" aria-labelledby="s4">
+  <div class="step-head">
+    <div class="num">4</div>
+    <div><h2 id="s4">Обработать скан</h2><p>Каждый раз, когда нужно обработать пластинку.</p></div>
+  </div>
+  <div class="body">
+    <h3>Запуск: любым из двух способов</h3>
+    <ul class="plain">
+      <li><strong>Перетащите файл скана мышкой прямо на значок <code>run.bat</code></strong> и отпустите.</li>
+      <li>Или дважды щёлкните <code>run.bat</code>, а потом перетащите файл скана в открывшееся чёрное окно и нажмите <kbd>Enter</kbd>.</li>
+    </ul>
+    <p>Программа задаст несколько вопросов. Напечатайте ответ и нажмите <kbd>Enter</kbd>. <strong>Если ответа не знаете — просто нажмите <kbd>Enter</kbd></strong>, программа попробует обойтись без него.</p>
+
+    <div class="window">
+      <div class="bar"><i></i><i></i><i></i> AstroPipe</div>
+<pre class="console"><span class="d">============================================================</span>
+Файл: plate_1965_042.tif
+Ответьте на вопросы. Если ответа не знаете — просто нажмите Enter.
+<span class="d">------------------------------------------------------------</span>
+
+1. Что снято? Название объекта или координаты центра снимка.
+<span class="d">   например: M45, Плеяды, Вега, NGC 7000 или 19 21 00 +41 10 00</span>
+   Ответ: <span class="you">19 21 00 +41 10 00</span>
+</pre>
+      <div class="cap">Подсвечено то, что печатаете вы. Пример ответа на первый вопрос — ниже, в таблице.</div>
+    </div>
+
+    <h3>Что отвечать на вопросы</h3>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Вопрос</th><th>Что написать</th><th>Пример</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>1. Что снято?</td>
+            <td><strong>Самый важный вопрос.</strong> Название объекта, на который был наведён телескоп, или координаты центра пластинки (прямое восхождение, затем склонение со знаком). Подойдут каталожные названия и обычные русские названия ярких звёзд и скоплений. Точность не нужна: хватит ошибки в полградуса.</td>
+            <td><span class="mono">M45</span><br><span class="mono">Плеяды</span><br><span class="mono">NGC 7000</span><br><span class="mono">19 21 00 +41 10 00</span></td>
+          </tr>
+          <tr>
+            <td>2. Год съёмки</td>
+            <td>Год, можно с долей года. Звёзды за десятилетия немного смещаются, и программа это учтёт.</td>
+            <td><span class="mono">1965</span><br><span class="mono">1965.5</span></td>
+          </tr>
+          <tr>
+            <td>3. Масштаб</td>
+            <td>Угловых секунд на пиксель. Почти всегда неизвестен — тогда <kbd>Enter</kbd>, и программа спросит фокус и dpi.</td>
+            <td><span class="mono">Enter</span></td>
+          </tr>
+          <tr>
+            <td>4. Фокусное расстояние</td>
+            <td>Фокусное расстояние телескопа или астрографа в миллиметрах. Есть в паспорте инструмента.</td>
+            <td><span class="mono">2000</span></td>
+          </tr>
+          <tr>
+            <td>5. Разрешение, dpi</td>
+            <td>Сколько точек на дюйм было выставлено в сканере. Спрашивается только для сканов (TIFF, PNG, JPEG).</td>
+            <td><span class="mono">1200</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Дальше программа работает сама: обычно до минуты, большой скан — несколько минут. Когда закончит, напишет итог и сама откроет папку с результатами:</p>
+    <div class="window">
+      <div class="bar"><i></i><i></i><i></i> AstroPipe</div>
+<pre class="console">Обрабатываю... (обычно до минуты, большие сканы — дольше)
+
+[plate_1965_042.tif] источников: 2088
+  центр поля: RA=290.2500° Dec=+41.1667° («19 21 00 +41 10 00»)
+  <span class="g">астрометрия: 1801 звёзд, RMS 0.80″, масштаб 3.992″/пикс</span>
+  <span class="g">фотометрия: RMS 0.095ᵐ по 1835 звёздам, предел ≈ 14.9ᵐ</span>
+
+Результаты в папке: D:\Сканы\astropipe_out
+
+Чтобы обработать ещё один файл, перетащите его в это окно и нажмите Enter.
+Чтобы закончить, нажмите Enter или закройте окно.
+Файл: </pre>
+      <div class="cap">Есть строки «астрометрия» и «фотометрия» с числами — значит, всё получилось. Можно сразу перетащить следующий скан.</div>
+    </div>
+    <div class="note info">
+      <span class="tag">Как читать эти строки</span>
+      <p><strong>Астрометрия</strong> — сколько звёзд опознано по каталогу и насколько точно (RMS в угловых секундах; меньше 1–2″ — хорошо). <strong>Фотометрия</strong> — точность звёздных величин (меньше 0,15ᵐ — хорошо) и самая слабая звезда, которую видно на пластинке.</p>
+    </div>
+  </div>
+</section>
+
+<section id="results" aria-labelledby="s5">
+  <div class="step-head">
+    <div class="num">5</div>
+    <div><h2 id="s5">Посмотреть результат</h2><p>Всё сохраняется в папку <code>astropipe_out</code> рядом с исходным сканом.</p></div>
+  </div>
+  <div class="body">
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Файл</th><th>Что внутри</th><th>Чем открыть</th></tr></thead>
+        <tbody>
+          <tr><td>…preview.png</td><td>Картинка снимка с отмеченными звёздами. <strong>Смотрите её первой.</strong></td><td>Двойной щелчок (любой просмотрщик фото)</td></tr>
+          <tr><td>…sources.csv</td><td>Таблица всех найденных звёзд: положение на снимке, координаты на небе <span class="mono">ra</span>, <span class="mono">dec</span> (в градусах), звёздная величина <span class="mono">mag</span>, каталожная величина <span class="mono">cat_mag</span>.</td><td>Excel или LibreOffice Calc</td></tr>
+          <tr><td>…report.json</td><td>Короткий отчёт: сколько звёзд, точность, масштаб, поворот, центр поля.</td><td>Блокнот</td></tr>
+          <tr><td>…proc.fits</td><td>Очищенный снимок с «прошитыми» небесными координатами — для профессиональных программ.</td><td><a href="https://ds9.si.edu/" target="_blank" rel="noopener">SAOImage DS9</a>, ASTAP, Aladin</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Как понимать картинку preview.png</h3>
+    <div class="window">
+      <canvas id="sky" width="760" height="300" aria-label="Пример превью: звёзды в зелёных и жёлтых кружках"></canvas>
+      <div class="cap">
+        <div class="legend">
+          <span><i class="ring g"></i>звезда опознана по каталогу — с ней всё в порядке</span>
+          <span><i class="ring y"></i>найдено что-то, чего нет в каталоге</span>
+        </div>
+      </div>
+    </div>
+    <p>Жёлтые кружки — это обычно пыль, царапины, дефекты эмульсии или очень яркие «расплывшиеся» звёзды. Если жёлтых мало, а зелёных много — обработка удалась. Жёлтый кружок на чистом месте, где на самой пластинке видна звёздочка, может оказаться интересным объектом: переменной звездой, астероидом или кометой.</p>
+
+    <div class="note info">
+      <span class="tag">Таблица в Excel открылась одной колонкой?</span>
+      <p>В Excel: <strong>Данные → Из текстового/CSV-файла</strong>, выберите файл, разделитель — <strong>запятая</strong>, затем <strong>Загрузить</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="scan-h">
+  <h2 id="scan-h">Как лучше сканировать пластинки</h2>
+  <p>От качества скана зависит всё остальное. Если есть возможность выбирать:</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Настройка</th><th>Как лучше</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Формат</td><td><strong>TIFF</strong>, 16 бит, оттенки серого</td><td>В JPEG теряются слабые звёзды</td></tr>
+        <tr><td>Разрешение</td><td>1200–2400 dpi; одно и то же для всей серии</td><td>Звезда должна занимать хотя бы 3–4 пикселя</td></tr>
+        <tr><td>Автоулучшения</td><td>Выключить: резкость, контраст, удаление пыли, «восстановление цвета»</td><td>Они искажают яркость звёзд</td></tr>
+        <tr><td>Негатив</td><td>Сканировать как есть, не обращать</td><td>Программа сама определяет негатив</td></tr>
+        <tr><td>Имя файла</td><td>Номер пластинки и год: <span class="mono">plate_1965_042.tif</span></td><td>Чтобы потом не путаться</td></tr>
+        <tr><td>Записать</td><td>dpi, номер пластинки, объект, дату</td><td>Это ответы на вопросы программы</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color:var(--muted)">Перед сканированием протрите стекло сканера и пластинку мягкой безворсовой тканью: каждая пылинка станет лишней «звездой».</p>
+</section>
+
+<section id="problems" aria-labelledby="pr-h">
+  <h2 id="pr-h">Если что-то пошло не так</h2>
+  <div>
+    <details>
+      <summary>Пишет «Не найден Python»</summary>
+      <div class="ans"><p>Python не установлен или при установке не стояла галочка «Add python.exe to PATH». Запустите установщик Python ещё раз, выберите <strong>Modify</strong> или установите заново, поставив галочку (шаг 1). Потом снова запустите <code>install.bat</code>.</p></div>
+    </details>
+    <details>
+      <summary>Пишет «Программа ещё не установлена»</summary>
+      <div class="ans"><p>Не был выполнен шаг 3 или он закончился ошибкой. Запустите <code>install.bat</code> и дождитесь слова «Готово».</p></div>
+    </details>
+    <details>
+      <summary>Окно мигнуло и сразу закрылось</summary>
+      <div class="ans"><p>Скорее всего, файлы запускаются прямо из архива. Сделайте шаг 2: «Извлечь все» и работайте с распакованной папкой.</p></div>
+    </details>
+    <details>
+      <summary>«астрометрия: не решено»</summary>
+      <div class="ans">
+        <p>Программа нашла звёзды, но не смогла понять, какой это участок неба. Что проверить:</p>
+        <ul class="plain">
+          <li>Правильно ли указан объект или координаты. Знак склонения важен: <span class="mono">+41</span> и <span class="mono">-41</span> — разные места на небе.</li>
+          <li>Укажите фокусное расстояние и dpi, если пропускали эти вопросы: с ними привязка намного надёжнее.</li>
+          <li>Есть ли интернет: без него не скачать каталог.</li>
+        </ul>
+        <p class="say">Если указано «каталог недоступен» — проблема с интернетом или сервер каталога временно не отвечает. Попробуйте через полчаса.</p>
+      </div>
+    </details>
+    <details>
+      <summary>«источников: 0» или очень мало звёзд</summary>
+      <div class="ans"><p>Скан слишком тёмный, слишком светлый или очень маленький. Откройте <code>preview.png</code> и посмотрите, видны ли звёзды. Попробуйте пересканировать с большим разрешением и без автоулучшений.</p></div>
+    </details>
+    <details>
+      <summary>Очень большой скан обрабатывается слишком долго</summary>
+      <div class="ans"><p>Это нормально для сканов больше 10 000 пикселей по стороне: может уйти 5–15 минут. Окно в это время не закрывайте.</p></div>
+    </details>
+    <details>
+      <summary>Ничего не помогло</summary>
+      <div class="ans"><p>Выделите весь текст в чёрном окне мышью, скопируйте (<kbd>Ctrl</kbd>+<kbd>C</kbd>) и отправьте вместе с файлом <code>…report.json</code> тому, кто прислал программу. Если можно — приложите и сам скан.</p></div>
+    </details>
+  </div>
+</section>
+
+<footer>
+  <p>AstroPipe 0.1. Звёздный каталог — Gaia DR3 (Европейское космическое агентство), загружается через службу VizieR. Звёздные величины даются в полосе Gaia G.</p>
+</footer>
+
+</div>
+
+<script>
+// Иллюстрация к превью: случайное звёздное поле, зелёные кружки — опознанные звёзды, жёлтые — дефекты.
+(function () {
+  var c = document.getElementById("sky");
+  if (!c || !c.getContext) return;
+  var ctx = c.getContext("2d"), W = c.width, H = c.height;
+  var seed = 7;
+  function rnd() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+  ctx.fillStyle = "#05080C"; ctx.fillRect(0, 0, W, H);
+  var img = ctx.getImageData(0, 0, W, H), d = img.data;
+  for (var i = 0; i < d.length; i += 4) { var n = 10 + rnd() * 18; d[i] = n; d[i + 1] = n; d[i + 2] = n + 3; }
+  ctx.putImageData(img, 0, 0);
+  function star(x, y, r, a) {
+    var g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, "rgba(255,255,255," + a + ")"); g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+  function ring(x, y, r, col) { ctx.strokeStyle = col; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); }
+  for (var k = 0; k < 95; k++) {
+    var x = 12 + rnd() * (W - 24), y = 12 + rnd() * (H - 24), m = rnd();
+    var r = 1.6 + Math.pow(m, 6) * 9;
+    star(x, y, r, 0.6 + 0.4 * m);
+    ring(x, y, Math.max(6, r + 3), rnd() < 0.9 ? "#34C26A" : "#E5B700");
+  }
+  ctx.strokeStyle = "rgba(255,255,255,0.35)"; ctx.lineWidth = 0.8;  // царапина
+  ctx.beginPath(); ctx.moveTo(470, 40); ctx.lineTo(600, 120); ctx.stroke();
+  for (var p = 0; p < 4; p++) {  // пылинки
+    var px = 40 + rnd() * (W - 80), py = 30 + rnd() * (H - 60);
+    ctx.fillStyle = "rgba(230,230,230,0.8)"; ctx.fillRect(px, py, 2 + rnd() * 3, 1.5 + rnd() * 2);
+    ring(px + 1.5, py + 1, 7, "#E5B700");
+  }
+})();
+</script>
+
+</body>
+</html>

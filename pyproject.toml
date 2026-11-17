@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astropipe"
+version = "0.1.0"
+description = "Конвейер обработки астроснимков: калибровка, поиск звёзд, астрометрия, фотометрия, движущиеся объекты"
+requires-python = ">=3.10"
+dependencies = ["numpy", "scipy", "astropy", "pillow"]
+
+[project.optional-dependencies]
+gaia = ["astroquery"]
+dev = ["pytest"]
+
+[project.scripts]
+astropipe = "astropipe.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["astropipe*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
